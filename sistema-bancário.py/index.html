@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema Bancário Digital</title>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2980b9;
+            --success-color: #2ecc71;
+            --danger-color: #e74c3c;
+            --light-color: #ecf0f1;
+            --dark-color: #2c3e50;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            color: var(--dark-color);
+            margin-bottom: 10px;
+        }
+        
+        .balance {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        
+        .menu {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .btn {
+            padding: 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn-deposit {
+            background-color: var(--success-color);
+            color: white;
+        }
+        
+        .btn-withdraw {
+            background-color: var(--danger-color);
+            color: white;
+        }
+        
+        .btn-statement {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .btn-exit {
+            background-color: var(--dark-color);
+            color: white;
+        }
+        
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+        }
+        
+        .close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--dark-color);
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+        
+        .submit-btn {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        
+        .submit-btn:hover {
+            background-color: var(--secondary-color);
+        }
+        
+        .statement {
+            background-color: var(--light-color);
+            padding: 20px;
+            border-radius: 8px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .statement-item {
+            padding: 10px 0;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .statement-item:last-child {
+            border-bottom: none;
+        }
+        
+        .deposit {
+            color: var(--success-color);
+        }
+        
+        .withdraw {
+            color: var(--danger-color);
+        }
+        
+        .current-balance {
+            margin-top: 20px;
+            font-weight: bold;
+            text-align: right;
+        }
+        
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            color: white;
+            font-weight: bold;
+            display: none;
+        }
+        
+        .alert-danger {
+            background-color: var(--danger-color);
+        }
+        
+        .alert-success {
+            background-color: var(--success-color);
+        }
+        
+        @media (max-width: 600px) {
+            .menu {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                margin: 20px auto;
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Banco Digital</h1>
+            <p>Gerencie suas finanças de forma simples e segura</p>
+        </header>
+        
+        <div class="balance">
+            Saldo atual: <span id="current-balance">R$ 0,00</span>
+        </div>
+        
+        <div class="alert" id="alert-message"></div>
+        
+        <div class="menu">
+            <button class="btn btn-deposit" id="deposit-btn">
+                <i>💵</i> Depositar
+            </button>
+            <button class="btn btn-withdraw" id="withdraw-btn">
+                <i>💰</i> Sacar
+            </button>
+            <button class="btn btn-statement" id="statement-btn">
+                <i>📄</i> Extrato
+            </button>
+            <button class="btn btn-exit" id="exit-btn">
+                <i>🚪</i> Sair
+            </button>
+        </div>
+    </div>
+    
+    <!-- Modal para Depósito -->
+    <div class="modal" id="deposit-modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Depositar</h2>
+            <form id="deposit-form">
+                <div class="form-group">
+                    <label for="deposit-amount">Valor do depósito:</label>
+                    <input type="number" id="deposit-amount" step="0.01" min="0.01" required>
+                </div>
+                <button type="submit" class="submit-btn">Confirmar Depósito</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Modal para Saque -->
+    <div class="modal" id="withdraw-modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Sacar</h2>
+            <form id="withdraw-form">
+                <div class="form-group">
+                    <label for="withdraw-amount">Valor do saque:</label>
+                    <input type="number" id="withdraw-amount" step="0.01" min="0.01" required>
+                </div>
+                <button type="submit" class="submit-btn">Confirmar Saque</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Modal para Extrato -->
+    <div class="modal" id="statement-modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Extrato Bancário</h2>
+            <div class="statement" id="statement-content">
+                <p>Não foram realizadas movimentações.</p>
+            </div>
+            <div class="current-balance">
+                Saldo atual: <span id="modal-balance">R$ 0,00</span>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Variáveis do sistema
+        let balance = 0;
+        let limit = 10000;
+        let statement = [];
+        let withdrawCount = 0;
+        const WITHDRAW_LIMIT = 10;
+        
+        // Elementos da interface
+        const currentBalanceEl = document.getElementById('current-balance');
+        const modalBalanceEl = document.getElementById('modal-balance');
+        const statementContentEl = document.getElementById('statement-content');
+        const alertMessageEl = document.getElementById('alert-message');
+        
+        // Botões
+        const depositBtn = document.getElementById('deposit-btn');
+        const withdrawBtn = document.getElementById('withdraw-btn');
+        const statementBtn = document.getElementById('statement-btn');
+        const exitBtn = document.getElementById('exit-btn');
+        
+        // Modais
+        const depositModal = document.getElementById('deposit-modal');
+        const withdrawModal = document.getElementById('withdraw-modal');
+        const statementModal = document.getElementById('statement-modal');
+        
+        // Formulários
+        const depositForm = document.getElementById('deposit-form');
+        const withdrawForm = document.getElementById('withdraw-form');
+        
+        // Funções para abrir/fechar modais
+        function openModal(modal) {
+            modal.style.display = 'flex';
+        }
+        
+        function closeModal(modal) {
+            modal.style.display = 'none';
+        }
+        
+        // Event listeners para os botões
+        depositBtn.addEventListener('click', () => openModal(depositModal));
+        withdrawBtn.addEventListener('click', () => openModal(withdrawModal));
+        statementBtn.addEventListener('click', () => {
+            updateStatement();
+            openModal(statementModal);
+        });
+        exitBtn.addEventListener('click', () => {
+            alert('Obrigado por usar nosso sistema bancário!');
+            // Em uma aplicação real, aqui poderia ter um redirecionamento
+        });
+        
+        // Fechar modais ao clicar no X
+        document.querySelectorAll('.close').forEach(closeBtn => {
+            closeBtn.addEventListener('click', function() {
+                const modal = this.closest('.modal');
+                closeModal(modal);
+            });
+        });
+        
+        // Fechar modais ao clicar fora do conteúdo
+        window.addEventListener('click', (event) => {
+            if (event.target.classList.contains('modal')) {
+                closeModal(event.target);
+            }
+        });
+        
+        // Atualizar o saldo na interface
+        function updateBalance() {
+            currentBalanceEl.textContent = `R$ ${balance.toFixed(2)}`;
+            modalBalanceEl.textContent = `R$ ${balance.toFixed(2)}`;
+        }
+        
+        // Atualizar o extrato
+        function updateStatement() {
+            if (statement.length === 0) {
+                statementContentEl.innerHTML = '<p>Não foram realizadas movimentações.</p>';
+                return;
+            }
+            
+            let html = '';
+            statement.forEach(item => {
+                html += `
+                    <div class="statement-item ${item.type}">
+                        <strong>${item.type === 'deposit' ? 'Depósito' : 'Saque'}:</strong> 
+                        R$ ${item.amount.toFixed(2)} - 
+                        ${item.date.toLocaleString()}
+                    </div>
+                `;
+            });
+            
+            statementContentEl.innerHTML = html;
+        }
+        
+        // Mostrar mensagem de alerta
+        function showAlert(message, type = 'danger') {
+            alertMessageEl.textContent = message;
+            alertMessageEl.className = `alert alert-${type}`;
+            alertMessageEl.style.display = 'block';
+            
+            setTimeout(() => {
+                alertMessageEl.style.display = 'none';
+            }, 5000);
+        }
+        
+        // Processar depósito
+        depositForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const amount = parseFloat(document.getElementById('deposit-amount').value);
+            
+            if (amount <= 0) {
+                showAlert('Operação falhou! O valor informado é inválido.');
+                return;
+            }
+            
+            balance += amount;
+            statement.push({
+                type: 'deposit',
+                amount: amount,
+                date: new Date()
+            });
+            
+            updateBalance();
+            showAlert(`Depósito de R$ ${amount.toFixed(2)} realizado com sucesso!`, 'success');
+            depositForm.reset();
+            closeModal(depositModal);
+        });
+        
+        // Processar saque
+        withdrawForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const amount = parseFloat(document.getElementById('withdraw-amount').value);
+            
+            if (amount <= 0) {
+                showAlert('Operação falhou! O valor informado é inválido.');
+                return;
+            }
+            
+            if (amount > balance) {
+                showAlert('Operação falhou! Você não tem saldo suficiente.');
+                return;
+            }
+            
+            if (amount > limit) {
+                showAlert('Operação falhou! O valor do saque excedeu o limite.');
+                return;
+            }
+            
+            if (withdrawCount >= WITHDRAW_LIMIT) {
+                showAlert('Operação falhou! Número máximo de saques excedido.');
+                return;
+            }
+            
+            balance -= amount;
+            withdrawCount++;
+            statement.push({
+                type: 'withdraw',
+                amount: amount,
+                date: new Date()
+            });
+            
+            updateBalance();
+            showAlert(`Saque de R$ ${amount.toFixed(2)} realizado com sucesso!`, 'success');
+            withdrawForm.reset();
+            closeModal(withdrawModal);
+        });
+        
+        // Inicializar a interface
+        updateBalance();
+    </script>
+</body>
+</html>
